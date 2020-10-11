@@ -7,21 +7,23 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.function.Predicate;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 public class InfrastructureTest {
-    private final static ObjectMapper JSON =
-        new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
 
-    @Test
-    public void testStack() throws IOException {
-        App app = new App();
-        InfrastructureStack stack = new InfrastructureStack(app, "test");
+	private final static ObjectMapper JSON = new ObjectMapper().configure(SerializationFeature.INDENT_OUTPUT, true);
 
-        // synthesize the stack to a CloudFormation template and compare against
-        // a checked-in JSON file.
-        JsonNode actual = JSON.valueToTree(app.synth().getStackArtifact(stack.getArtifactId()).getTemplate());
-        assertEquals(new ObjectMapper().createObjectNode(), actual);
-    }
+	@Test
+	public void testStack() throws IOException {
+		App app = new App();
+		InfrastructureStack stack = new InfrastructureStack(app, "test");
+
+		JsonNode actual = JSON.valueToTree(app.synth().getStackArtifact(stack.getArtifactId()).getTemplate());
+		assertThat(actual.get("Resources"))
+				.anyMatch(jsonNode -> "AWS::Route53::HostedZone".equals(jsonNode.get("Type").asText()));
+	}
+
 }
