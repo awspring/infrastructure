@@ -1,4 +1,4 @@
-package com.myorg;
+package io.awspring.infrastructure;
 
 import software.amazon.awscdk.core.App;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;

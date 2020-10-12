@@ -1,4 +1,4 @@
-package com.myorg;
+package io.awspring.infrastructure;
 
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
@@ -38,8 +38,7 @@ public class InfrastructureStack extends Stack {
 		final String domain = "awspring.io";
 
 		// Create Hosted Zone for awspring.io domain
-		HostedZone hostedZone = new HostedZone(this, "HostedZone",
-				HostedZoneProps.builder().zoneName(domain).build());
+		HostedZone hostedZone = new HostedZone(this, "HostedZone", HostedZoneProps.builder().zoneName(domain).build());
 		Tags.of(hostedZone).add("component", "website");
 
 		// Create a certificate for Cloudfront
@@ -56,8 +55,7 @@ public class InfrastructureStack extends Stack {
 		CloudFrontWebDistribution cloudfront = new CloudFrontWebDistribution(this, "website-distribution",
 				CloudFrontWebDistributionProps.builder()
 						.viewerCertificate(ViewerCertificate.fromAcmCertificate(certificate,
-								ViewerCertificateOptions.builder().aliases(Collections.singletonList(domain))
-										.build()))
+								ViewerCertificateOptions.builder().aliases(Collections.singletonList(domain)).build()))
 						.originConfigs(Collections.singletonList(SourceConfiguration.builder()
 								.s3OriginSource(S3OriginConfig.builder().s3BucketSource(bucket).build())
 								.behaviors(Arrays.asList(Behavior.builder().isDefaultBehavior(true).build())).build()))

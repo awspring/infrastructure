@@ -1,10 +1,8 @@
-package com.myorg;
+package io.awspring.infrastructure;
 
 import software.amazon.awscdk.core.App;
 import software.amazon.awscdk.core.Environment;
 import software.amazon.awscdk.core.StackProps;
-
-import java.util.Arrays;
 
 public class InfrastructureApp {
 

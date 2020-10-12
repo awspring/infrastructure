@@ -29,7 +29,7 @@
                 <artifactId>exec-maven-plugin</artifactId>
                 <version>1.6.0</version>
                 <configuration>
-                    <mainClass>com.myorg.InfrastructureApp</mainClass>
+                    <mainClass>io.awspring.infrastructure.InfrastructureApp</mainClass>
                 </configuration>
             </plugin>
 
