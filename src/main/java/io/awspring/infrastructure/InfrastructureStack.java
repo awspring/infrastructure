@@ -1,5 +1,7 @@
 package io.awspring.infrastructure;
 
+import software.amazon.awscdk.core.CfnOutput;
+import software.amazon.awscdk.core.CfnOutputProps;
 import software.amazon.awscdk.core.Construct;
 import software.amazon.awscdk.core.Stack;
 import software.amazon.awscdk.core.StackProps;
@@ -14,6 +16,14 @@ import software.amazon.awscdk.services.cloudfront.S3OriginConfig;
 import software.amazon.awscdk.services.cloudfront.SourceConfiguration;
 import software.amazon.awscdk.services.cloudfront.ViewerCertificate;
 import software.amazon.awscdk.services.cloudfront.ViewerCertificateOptions;
+import software.amazon.awscdk.services.iam.CfnAccessKey;
+import software.amazon.awscdk.services.iam.CfnAccessKeyProps;
+import software.amazon.awscdk.services.iam.Policy;
+import software.amazon.awscdk.services.iam.PolicyProps;
+import software.amazon.awscdk.services.iam.PolicyStatement;
+import software.amazon.awscdk.services.iam.PolicyStatementProps;
+import software.amazon.awscdk.services.iam.User;
+import software.amazon.awscdk.services.iam.UserProps;
 import software.amazon.awscdk.services.route53.ARecord;
 import software.amazon.awscdk.services.route53.ARecordProps;
 import software.amazon.awscdk.services.route53.CnameRecord;
@@ -81,7 +91,7 @@ public class InfrastructureStack extends Stack {
 		Tags.of(bucket).add("component", "website");
 
 		// Create Cloudfront (CDN) distribution that links to S3
-		new CloudFrontWebDistribution(this, "docs-distribution",
+		CloudFrontWebDistribution docsDistribution = new CloudFrontWebDistribution(this, "docs-distribution",
 				CloudFrontWebDistributionProps.builder()
 						.viewerCertificate(ViewerCertificate.fromAcmCertificate(certificate,
 								ViewerCertificateOptions.builder().aliases(Collections.singletonList("docs." + domain))
@@ -96,6 +106,33 @@ public class InfrastructureStack extends Stack {
 				CnameRecordProps.builder().zone(hostedZone).domainName(cloudfront.getDistributionDomainName())
 						.recordName("docs.awspring.io").build());
 		Tags.of(cnameRecord).add("component", "website");
+
+		PolicyStatement allowUploads = new PolicyStatement(PolicyStatementProps.builder()
+				.resources(Arrays.asList(bucket.getBucketArn(), bucket.getBucketArn() + "/*", docsBucket.getBucketArn(),
+						docsBucket.getBucketArn() + "/*"))
+				.actions(Arrays.asList("s3:ListBucket", "s3:PutObject", "s3:PutObjectAcl", "s3:DeleteObject",
+						"s3:GetObject", "s3:GetObjectAcl", "s3:GetObjectVersion"))
+				.build());
+
+		PolicyStatement allowInvalidation = new PolicyStatement(PolicyStatementProps.builder()
+				.resources(Collections.singletonList("arn:aws:cloudfront::" + Stack.of(this).getAccount()
+						+ ":distribution/" + docsDistribution.getDistributionId()))
+				.actions(Collections.singletonList("cloudfront:CreateInvalidation")).build());
+
+		Policy policy = new Policy(this, "website-s3-access", PolicyProps.builder().policyName("website-s3-access")
+				.statements(Arrays.asList(allowUploads, allowInvalidation)).build());
+
+		User user = new User(this, "github-s3-upload-user",
+				UserProps.builder().userName("github-s3-upload-user").build());
+		user.attachInlinePolicy(policy);
+
+		CfnAccessKey cfnAccessKey = new CfnAccessKey(this, "access-key",
+				CfnAccessKeyProps.builder().userName(user.getUserName()).build());
+
+		new CfnOutput(this, "github-s3-upload-user-access-key",
+				CfnOutputProps.builder().value(cfnAccessKey.getRef()).build());
+		new CfnOutput(this, "github-s3-upload-user-secret-key",
+				CfnOutputProps.builder().value(cfnAccessKey.getAttrSecretAccessKey()).build());
 	}
 
 }
