@@ -79,8 +79,8 @@ public class InfrastructureStack extends Stack {
 		Tags.of(cloudfront).add("component", "website");
 
 		// Create a Route 53 record that links to Cloudfront
-		ARecord aRecord = new ARecord(this, "awspring-arecord", ARecordProps.builder().zone(hostedZone)
-				.target(RecordTarget.fromAlias(new CloudFrontTarget(cloudfront))).build());
+		ARecord aRecord = new ARecord(this, "awspring-arecord",
+				ARecordProps.builder().zone(hostedZone).target(RecordTarget.fromIpAddresses("104.198.14.52")).build());
 		Tags.of(aRecord).add("component", "website");
 
 		// ---------------------- https://docs.awspring.io ----------------------
